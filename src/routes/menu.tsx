@@ -5,6 +5,7 @@ import { Download, Upload, RotateCcw, FileDown, UserPlus } from "@/components/ap
 import { ReportSheet } from "@/components/app/ReportSheet";
 import { Sheet } from "@/components/app/Sheet";
 import { StudentForm, emptyStudent } from "@/components/app/StudentForm";
+import { PhotoNamesImport } from "@/components/app/PhotoNamesImport";
 import { useStore, type State } from "@/lib/store";
 import { exportFiles, importFiles } from "@/lib/attachments";
 
@@ -61,6 +62,7 @@ function Menu() {
       <div className="mt-5 space-y-3">
         <button onClick={() => setAddOpen(true)} className={`${btn} border-primary bg-primary text-primary-foreground`}><UserPlus className="h-5 w-5" /> Talebe Ekle</button>
         <Sheet open={addOpen} onClose={() => setAddOpen(false)} title="Yeni Talebe">
+          <PhotoNamesImport onDone={(n) => { setAddOpen(false); setMsg(`${n} talebe eklendi.`); }} />
           <StudentForm initial={emptyStudent} onSubmit={(s) => { addStudent(s); setAddOpen(false); setMsg(`${s.name} eklendi.`); }} />
         </Sheet>
         <button onClick={() => setReportOpen(true)} className={btn}><FileDown className="h-5 w-5 text-primary" /> Yoklama Raporu İndir (PDF / Excel)</button>
