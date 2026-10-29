@@ -32,6 +32,8 @@ function Yoklama() {
   const [marks, setMarks] = useState<Record<string, Row>>({});
   const [saved, setSaved] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [mode, setMode] = useState<"hepsi" | "tek">("hepsi");
+  const [tek, setTek] = useState<string>(VAKITLER[0]);
 
   // attendance arrives one tick after mount (store hydrates from device storage),
   // so this must re-run when it loads — otherwise saved marks never show up.
@@ -55,6 +57,18 @@ function Yoklama() {
   };
   const setDurum = (id: string, durum: Row["durum"]) => { setMarks({ ...marks, [id]: { ...get(id), durum } }); setSaved(false); };
   const toggleDurum = (id: string, k: "gec" | "izinli") => { const cur = get(id).durum; setDurum(id, cur === k ? "normal" : k); };
+
+  const isOn = (r: Row, c: string) => (c === "Ders" ? r.ders : r.vakitler.includes(c));
+  const markAll = () => {
+    const allOn = students.every((s) => isOn(get(s.id), tek));
+    const m = { ...marks };
+    for (const s of students) {
+      const r = get(s.id);
+      if (isOn(r, tek) === allOn) m[s.id] = tek === "Ders" ? { ...r, ders: !allOn } : { ...r, vakitler: allOn ? r.vakitler.filter((v) => v !== tek) : [...r.vakitler, tek] };
+    }
+    setMarks(m); setSaved(false);
+  };
+  const tekCount = students.filter((s) => isOn(get(s.id), tek)).length;
 
   const save = () => {
     saveDay(date, students.map((s) => ({ studentId: s.id, ...get(s.id) })));
@@ -81,6 +95,18 @@ function Yoklama() {
           {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />} {saved ? "Kaydedildi" : "Yoklamayı Kaydet"}
         </button>
       </div>
+      <div className="mt-3 grid grid-cols-2 gap-1 rounded-2xl border border-border bg-surface p-1 text-sm">
+        {([["hepsi", "Tüm Vakitler"], ["tek", "Tek Namaz"]] as const).map(([k, l]) => (
+          <button key={k} onClick={() => setMode(k)} className={`rounded-xl py-2.5 font-medium transition-colors ${mode === k ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground"}`}>{l}</button>
+        ))}
+      </div>
+      {mode === "tek" && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {cols.map((c) => (
+            <button key={c} onClick={() => setTek(c)} className={`rounded-full border px-4 py-2 text-sm transition-colors ${tek === c ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground"}`}>{c}</button>
+          ))}
+        </div>
+      )}
       <button
         onClick={() => setReportOpen(true)}
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-primary/30 bg-brand-soft py-3 text-sm font-medium text-primary transition-transform active:scale-[0.98]"
@@ -91,6 +117,42 @@ function Yoklama() {
       {students.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
           Yoklama almak için önce <Link to="/" className="font-medium text-primary underline">talebe ekleyin</Link>.
+        </div>
+      ) : mode === "tek" ? (
+        <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="flex items-center justify-between gap-2 bg-brand-soft px-4 py-3">
+            <span className="text-sm font-semibold">{tek} <span className="font-normal text-muted-foreground">· {tekCount}/{students.length} geldi</span></span>
+            <button onClick={markAll} className="rounded-lg border border-primary/30 bg-card px-3 py-1.5 text-xs font-medium text-primary">
+              {students.every((s) => isOn(get(s.id), tek)) ? "Hepsini Kaldır" : "Hepsi Geldi"}
+            </button>
+          </div>
+          {students.map((s) => {
+            const r = get(s.id);
+            const on = isOn(r, tek);
+            return (
+              <div key={s.id} className="flex items-center gap-3 border-t border-border px-4 py-3">
+                <Avatar name={s.name} size="xs" />
+                <span className="min-w-0 flex-1 text-sm leading-snug">{s.name}</span>
+                <button
+                  onClick={() => toggle(s.id, tek)}
+                  aria-label={`${s.name} ${tek}`}
+                  className={`flex h-10 min-w-[4.5rem] items-center justify-center gap-1 rounded-xl border text-xs font-medium transition-colors ${on ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface text-muted-foreground"}`}
+                >
+                  {on ? <><Check className="h-4 w-4" /> Geldi</> : "Gelmedi"}
+                </button>
+                {DURUMLAR.map((d) => (
+                  <button
+                    key={d.k}
+                    onClick={() => toggleDurum(s.id, d.k)}
+                    aria-label={`${s.name} ${d.l}`}
+                    className={`flex h-10 w-14 items-center justify-center rounded-xl border text-xs transition-colors ${r.durum === d.k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface text-muted-foreground"}`}
+                  >
+                    {d.l}
+                  </button>
+                ))}
+              </div>
+            );
+          })}
         </div>
       ) : (
         <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
