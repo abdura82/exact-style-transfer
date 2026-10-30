@@ -11,7 +11,7 @@ import { StudentForm } from "@/components/app/StudentForm";
 import { TutanakForm } from "@/components/app/TutanakForm";
 import { TutanakFiles } from "@/components/app/TutanakFiles";
 import { deleteFile } from "@/lib/attachments";
-import { useStore, type AttendanceRow, type Student, type Tutanak } from "@/lib/store";
+import { useStore, type Student, type Tutanak } from "@/lib/store";
 import { PdfButton } from "@/components/app/PdfButton";
 import { computeStats, monthly } from "@/lib/stats";
 
