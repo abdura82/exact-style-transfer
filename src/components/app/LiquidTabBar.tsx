@@ -26,8 +26,8 @@ export function LiquidTabBar({ tabs }: { tabs: readonly Tab[] }) {
   const n = tabs.length;
 
   return (
-    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-20 mx-auto max-w-md px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] sm:px-4">
-      <div className="glass-bar pointer-events-auto rounded-[2rem] p-1.5">
+    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-20 mx-auto max-w-md bg-background px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2 sm:px-4">
+      <div className="pointer-events-auto rounded-[2rem] border border-border bg-card p-1.5 shadow-md">
         <div
           className="relative grid select-none"
           style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}
