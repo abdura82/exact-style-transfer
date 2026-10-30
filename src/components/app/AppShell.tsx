@@ -25,7 +25,7 @@ function Mosque() {
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="mx-auto min-h-screen max-w-md bg-background pb-32 font-sans text-foreground">
-      <div className="sticky top-0 z-30">
+      <div className="fixed inset-x-0 top-0 z-30 mx-auto max-w-md">
         <div aria-hidden className="absolute inset-0 bg-background" />
         <header className="relative overflow-hidden rounded-b-[2rem] bg-primary px-4 pb-4 pt-4 shadow-md">
           <Mosque />
@@ -40,7 +40,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
       </div>
-      <main className="px-4">{children}</main>
+      <main className="px-4 pt-[72px]">{children}</main>
       <LiquidTabBar tabs={tabs} />
 
     </div>

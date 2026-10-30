@@ -170,11 +170,17 @@
 }
 
 @layer base {
+  html {
+    scrollbar-gutter: stable both-edges;
+    overflow-x: clip;
+  }
+
   * {
     border-color: var(--color-border);
   }
 
   body {
+    overflow-x: clip;
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
