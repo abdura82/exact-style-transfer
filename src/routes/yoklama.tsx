@@ -1,9 +1,8 @@
 import { localIso } from "@/lib/utils";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Calendar, Save, Check, Download } from "@/components/app/icons";
+import { Calendar, Save, Check } from "@/components/app/icons";
 import { Avatar } from "@/components/app/AppShell";
-import { ReportSheet } from "@/components/app/ReportSheet";
 import { Button } from "@/components/ui/button";
 import { useStore, type AttendanceRow } from "@/lib/store";
 import { VAKITLER } from "@/lib/stats";
@@ -34,7 +33,6 @@ function Yoklama() {
   const [date, setDate] = useState(localIso());
   const [marks, setMarks] = useState<Record<string, Row>>({});
   const [saved, setSaved] = useState(false);
-  const [reportOpen, setReportOpen] = useState(false);
   const [mode, setMode] = useState<"hepsi" | "tek">("hepsi");
   const [tek, setTek] = useState<string>(VAKITLER[0]);
 
@@ -82,9 +80,6 @@ function Yoklama() {
     <>
       <div className="mt-4 flex items-center justify-between gap-2">
         <h2 className="font-serif text-2xl font-bold">Günlük Yoklama</h2>
-        <Button variant="outline" size="icon" onClick={() => setReportOpen(true)} aria-label="Yoklama Raporu İndir (PDF / Excel)" title="Yoklama Raporu İndir (PDF / Excel)" className="shrink-0 text-primary">
-          <Download />
-        </Button>
       </div>
       <div className="mt-2 flex items-center justify-between gap-2">
         <label className="relative flex min-w-0 items-center gap-1.5 rounded-lg border border-border px-2.5 py-2 text-xs" title={day}>
@@ -108,7 +103,6 @@ function Yoklama() {
           ))}
         </div>
       )}
-      <ReportSheet open={reportOpen} onClose={() => setReportOpen(false)} initialDate={date} />
       {students.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
           Yoklama almak için önce <Link to="/" className="font-medium text-primary underline">talebe ekleyin</Link>.
@@ -139,14 +133,17 @@ function Yoklama() {
                   {on && <Check />}
                 </Button>
                 {DURUMLAR.map((d) => (
-                  <button
+                  <Button
                     key={d.k}
+                    variant="ghost"
+                    size="sm"
                     onClick={() => toggleDurum(s.id, d.k)}
                     aria-label={`${s.name} ${d.l}`}
-                    className={`flex h-10 w-14 items-center justify-center rounded-xl border text-xs transition-colors ${r.durum === d.k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface text-muted-foreground"}`}
+                    aria-pressed={r.durum === d.k}
+                    className={`h-8 w-11 shrink-0 rounded-md border px-0 text-[11px] ${r.durum === d.k ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : "border-border bg-surface text-muted-foreground"}`}
                   >
                     {d.l}
-                  </button>
+                  </Button>
                 ))}
               </div>
             );
