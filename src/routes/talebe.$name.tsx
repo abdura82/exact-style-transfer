@@ -1,28 +1,29 @@
-import { localIso } from "@/lib/utils";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   ArrowLeft, Pencil, Trash2, MapPin, User, Phone, Plus,
   CalendarDays, Clock, CalendarOff, Sunrise, Sun, CloudSun, Sunset, Moon,
-  CheckCircle2, CalendarX, AlertTriangle, PenLine, ThumbsUp, X,
+  CheckCircle2, CalendarX, AlertTriangle, PenLine, ThumbsUp,
 } from "@/components/app/icons";
 import { Avatar } from "@/components/app/AppShell";
-import { Sheet, Field, inputCls, primaryBtn } from "@/components/app/Sheet";
+import { Sheet } from "@/components/app/Sheet";
 import { StudentForm } from "@/components/app/StudentForm";
 import { TutanakForm } from "@/components/app/TutanakForm";
 import { TutanakFiles } from "@/components/app/TutanakFiles";
 import { deleteFile } from "@/lib/attachments";
 import { useStore, type AttendanceRow, type Student, type Tutanak } from "@/lib/store";
 import { PdfButton } from "@/components/app/PdfButton";
-import { computeStats, monthly, VAKITLER } from "@/lib/stats";
+import { computeStats, monthly } from "@/lib/stats";
 
 export const Route = createFileRoute("/talebe/$name")({
   head: () => ({
     meta: [
       { title: "Talebe Detayı — Kur'an Kursu" },
-      { name: "description", content: "Talebe detayı: yoklama geçmişi, tutanaklar ve aile raporu." },
+      { name: "description", content: "Talebe detayı: yoklama özeti, tutanaklar ve aile raporu." },
       { property: "og:title", content: "Talebe Detayı — Kur'an Kursu" },
-      { property: "og:description", content: "Talebe detayı: yoklama geçmişi, tutanaklar ve aile raporu." },
+      { property: "og:description", content: "Talebe detayı: yoklama özeti, tutanaklar ve aile raporu." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: TalebeDetay,
@@ -30,45 +31,6 @@ export const Route = createFileRoute("/talebe/$name")({
 
 const tabs = ["Yoklama", "Tutanaklar", "Aile Raporu"] as const;
 const vakitIcons = { Sabah: Sunrise, Öğle: Sun, İkindi: CloudSun, Akşam: Sunset, Yatsı: Moon } as Record<string, typeof Clock>;
-const today = () => localIso();
-
-
-function durumLabel(r: AttendanceRow) {
-  if (r.durum === "izinli") return { t: "İzinli", c: "text-info" };
-  if (r.durum === "gec") return { t: "Geç Kaldı", c: "text-warn" };
-  if (r.vakitler.length && r.ders) return { t: "Namaz + Ders", c: "text-primary" };
-  if (r.ders) return { t: "Ders", c: "text-primary" };
-  if (r.vakitler.length) return { t: `Namaz (${r.vakitler.length})`, c: "text-primary" };
-  return { t: "Katılmadı", c: "text-destructive" };
-}
-
-function AttendanceForm({ onSubmit }: { onSubmit: (a: Omit<AttendanceRow, "id" | "studentId">) => void }) {
-  const [date, setDate] = useState(today());
-  const [vakitler, setV] = useState<string[]>([]);
-  const [ders, setDers] = useState(false);
-  const [durum, setDurum] = useState<AttendanceRow["durum"]>("normal");
-  const chip = (on: boolean) => `rounded-xl border px-3 py-2 text-sm ${on ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface"}`;
-  return (
-    <form onSubmit={(e) => { e.preventDefault(); onSubmit({ date, vakitler, ders, durum }); }}>
-      <Field label="Tarih"><input type="date" className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} /></Field>
-      <p className="text-xs text-muted-foreground">Kıldığı namazlar</p>
-      <div className="mb-3 mt-1 flex flex-wrap gap-2">
-        {VAKITLER.map((v) => (
-          <button type="button" key={v} className={chip(vakitler.includes(v))} onClick={() => setV(vakitler.includes(v) ? vakitler.filter((x) => x !== v) : [...vakitler, v])}>{v}</button>
-        ))}
-        <button type="button" className={chip(ders)} onClick={() => setDers(!ders)}>Ders</button>
-      </div>
-      <p className="text-xs text-muted-foreground">Durum</p>
-      <div className="mb-4 mt-1 flex gap-2">
-        {([["normal", "Normal"], ["gec", "Geç Kaldı"], ["izinli", "İzinli"]] as const).map(([k, l]) => (
-          <button type="button" key={k} className={chip(durum === k)} onClick={() => setDurum(k)}>{l}</button>
-        ))}
-      </div>
-      <button className={primaryBtn}>Kaydet</button>
-    </form>
-  );
-}
-
 function TutCard({ t, student, onSign, onRemove }: { t: Tutanak; student: Student; onSign?: () => void; onRemove?: () => void }) {
   return (
     <div className={`rounded-2xl border bg-card p-4 ${t.positive ? "border-good/40" : "border-warn/40"}`}>
@@ -111,7 +73,7 @@ function TalebeDetay() {
   const store = useStore();
   const navigate = useNavigate();
   const [tab, setTab] = useState<(typeof tabs)[number]>("Yoklama");
-  const [sheet, setSheet] = useState<null | "edit" | "yoklama" | "tutanak">(null);
+  const [sheet, setSheet] = useState<null | "edit" | "tutanak">(null);
   const found = store.students.find((s) => s.id === raw) ?? store.students.find((s) => s.name === decodeURIComponent(raw));
   const student = found;
   const id = found?.id ?? raw;
@@ -205,28 +167,6 @@ function TalebeDetay() {
             })}
           </div>
 
-          <div className="mt-5 flex items-center justify-between">
-            <h3 className="font-serif text-xl font-bold">Yoklama Geçmişi</h3>
-            <button onClick={() => setSheet("yoklama")} className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-sm text-primary-foreground"><Plus className="h-4 w-4" /> Ekle</button>
-          </div>
-          <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card">
-            {rows.length === 0 && <p className="p-5 text-center text-sm text-muted-foreground">Kayıt yok.</p>}
-            {rows.map((h) => (
-              <div key={h.id} className="flex items-center gap-3 border-b border-border px-4 py-3 text-sm last:border-0">
-                <div className="shrink-0">
-                  <p className="font-medium">{h.date}</p>
-                  {h.durum !== "normal" && <p className={`text-xs ${durumLabel(h).c}`}>{durumLabel(h).t}</p>}
-                </div>
-                <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-1">
-                  {h.vakitler.map((c) => <span key={c} className="rounded-full bg-brand-soft px-2 py-0.5 text-xs text-primary">{c}</span>)}
-                  {h.ders && <span className="rounded-full bg-amber-soft px-2 py-0.5 text-xs text-warn">Ders</span>}
-                  {!h.vakitler.length && !h.ders && <span className="text-xs text-muted-foreground">—</span>}
-                </div>
-                <button onClick={() => store.removeAttendance(h.id)} aria-label="Kaydı sil" className="shrink-0 text-muted-foreground"><X className="h-4 w-4" /></button>
-              </div>
-            ))}
-          </div>
-
           {months.length > 0 && (
             <div className="mt-4 rounded-2xl border border-border bg-card p-4">
               <h4 className="font-serif text-lg font-bold">Aylık Gelişim</h4>
@@ -312,9 +252,6 @@ function TalebeDetay() {
 
       <Sheet open={sheet === "edit"} onClose={() => setSheet(null)} title="Talebeyi Düzenle">
         <StudentForm initial={student} onSubmit={(s) => { store.updateStudent(id, s); setSheet(null); }} />
-      </Sheet>
-      <Sheet open={sheet === "yoklama"} onClose={() => setSheet(null)} title="Yoklama Ekle">
-        <AttendanceForm onSubmit={(a) => { store.addAttendance({ ...a, studentId: id }); setSheet(null); }} />
       </Sheet>
       <Sheet open={sheet === "tutanak"} onClose={() => setSheet(null)} title="Yeni Tutanak">
         <TutanakForm onCancel={() => setSheet(null)} onSubmit={(t) => { store.addTutanak({ ...t, studentId: id }); setSheet(null); }} />
