@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Calendar, Save, Check, Download } from "@/components/app/icons";
 import { Avatar } from "@/components/app/AppShell";
 import { ReportSheet } from "@/components/app/ReportSheet";
+import { Button } from "@/components/ui/button";
 import { useStore, type AttendanceRow } from "@/lib/store";
 import { VAKITLER } from "@/lib/stats";
 
@@ -14,6 +15,8 @@ export const Route = createFileRoute("/yoklama")({
       { name: "description", content: "Beş vakit namaz ve ders yoklamasını işaretleyip kaydedin." },
       { property: "og:title", content: "Günlük Yoklama — Kur'an Kursu" },
       { property: "og:description", content: "Beş vakit namaz ve ders yoklamasını işaretleyip kaydedin." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Yoklama,
@@ -77,49 +80,41 @@ function Yoklama() {
 
   return (
     <>
-      <h2 className="mt-7 font-serif text-3xl font-bold">Günlük Yoklama</h2>
-      <p className="mt-2 text-sm text-muted-foreground">Beş vakit namaz ve ders yoklamasını işaretleyip kaydedin.</p>
-      <div className="mt-5 flex items-end justify-between gap-3 rounded-2xl border border-border bg-card p-5">
-        <div>
-          <p className="text-xs text-muted-foreground">Tarih</p>
-          <div className="mt-2 flex items-center gap-2">
-            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-            <label className="relative whitespace-nowrap rounded-xl border border-border px-4 py-2 text-sm">
-              {label}
-              <input type="date" value={date} onChange={(e) => { if (e.target.value) { setDate(e.target.value); setSaved(false); } }} className="absolute inset-0 opacity-0" />
-            </label>
-          </div>
-          <p className="mt-2 font-semibold capitalize text-primary">{day}</p>
-        </div>
-        <button onClick={save} disabled={!students.length} className="mb-6 flex items-center gap-2 whitespace-nowrap rounded-xl bg-primary px-3 py-2.5 text-xs text-primary-foreground disabled:opacity-50">
-          {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />} {saved ? "Kaydedildi" : "Yoklamayı Kaydet"}
-        </button>
+      <div className="mt-4 flex items-center justify-between gap-2">
+        <h2 className="font-serif text-2xl font-bold">Günlük Yoklama</h2>
+        <Button variant="outline" size="icon" onClick={() => setReportOpen(true)} aria-label="Yoklama Raporu İndir (PDF / Excel)" title="Yoklama Raporu İndir (PDF / Excel)" className="shrink-0 text-primary">
+          <Download />
+        </Button>
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-1 rounded-2xl border border-border bg-surface p-1 text-sm">
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <label className="relative flex min-w-0 items-center gap-1.5 rounded-lg border border-border px-2.5 py-2 text-xs" title={day}>
+          <Calendar className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <span>{label} <span className="hidden text-muted-foreground sm:inline">· {day}</span></span>
+          <input aria-label="Yoklama tarihi" type="date" value={date} onChange={(e) => { if (e.target.value) { setDate(e.target.value); setSaved(false); } }} className="absolute inset-0 w-full opacity-0" />
+        </label>
+        <Button onClick={save} disabled={!students.length} size="sm" className="shrink-0">
+          {saved ? <Check /> : <Save />} {saved ? "Kaydedildi" : "Yoklamayı Kaydet"}
+        </Button>
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-1 rounded-lg bg-surface p-1 text-sm">
         {([["hepsi", "Tüm Vakitler"], ["tek", "Tek Namaz"]] as const).map(([k, l]) => (
-          <button key={k} onClick={() => setMode(k)} className={`rounded-xl py-2.5 font-medium transition-colors ${mode === k ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground"}`}>{l}</button>
+          <Button key={k} variant="ghost" size="sm" onClick={() => setMode(k)} aria-pressed={mode === k} className={mode === k ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : "text-muted-foreground"}>{l}</Button>
         ))}
       </div>
       {mode === "tek" && (
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-2 grid grid-cols-6 gap-1">
           {cols.map((c) => (
-            <button key={c} onClick={() => setTek(c)} className={`rounded-full border px-4 py-2 text-sm transition-colors ${tek === c ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground"}`}>{c}</button>
+            <Button key={c} variant="outline" size="sm" onClick={() => setTek(c)} aria-pressed={tek === c} className={`px-0 ${tek === c ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : "border-border bg-card text-foreground"}`}>{c}</Button>
           ))}
         </div>
       )}
-      <button
-        onClick={() => setReportOpen(true)}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-primary/30 bg-brand-soft py-3 text-sm font-medium text-primary transition-transform active:scale-[0.98]"
-      >
-        <Download className="h-4 w-4" /> Yoklama Raporu İndir (PDF / Excel)
-      </button>
       <ReportSheet open={reportOpen} onClose={() => setReportOpen(false)} initialDate={date} />
       {students.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
           Yoklama almak için önce <Link to="/" className="font-medium text-primary underline">talebe ekleyin</Link>.
         </div>
       ) : mode === "tek" ? (
-        <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card">
           <div className="flex items-center justify-between gap-2 bg-brand-soft px-4 py-3">
             <span className="text-sm font-semibold">{tek} <span className="font-normal text-muted-foreground">· {tekCount}/{students.length} geldi</span></span>
             <button onClick={markAll} className="rounded-lg border border-primary/30 bg-card px-3 py-1.5 text-xs font-medium text-primary">
@@ -133,13 +128,16 @@ function Yoklama() {
               <div key={s.id} className="flex items-center gap-3 border-t border-border px-4 py-3">
                 <Avatar name={s.name} size="xs" />
                 <span className="min-w-0 flex-1 text-sm leading-snug">{s.name}</span>
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => toggle(s.id, tek)}
                   aria-label={`${s.name} ${tek}`}
-                  className={`flex h-10 min-w-[4.5rem] items-center justify-center gap-1 rounded-xl border text-xs font-medium transition-colors ${on ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface text-muted-foreground"}`}
+                  aria-pressed={on}
+                  className={`h-8 w-8 shrink-0 rounded-md border ${on ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : "border-border bg-surface text-muted-foreground"}`}
                 >
-                  {on ? <><Check className="h-4 w-4" /> Geldi</> : "Gelmedi"}
-                </button>
+                  {on && <Check />}
+                </Button>
                 {DURUMLAR.map((d) => (
                   <button
                     key={d.k}
@@ -155,7 +153,7 @@ function Yoklama() {
           })}
         </div>
       ) : (
-        <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card">
           <div className="flex items-center gap-2 bg-brand-soft px-3 py-2 text-muted-foreground">
             <span className="min-w-0 flex-1 text-[11px] font-semibold">Adı Soyadı</span>
             <div className="flex shrink-0 items-center gap-[3px]">
